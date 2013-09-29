@@ -1,0 +1,30 @@
+{
+   "background": {
+      "persistent": false,
+      "scripts": [ "js/background.js" ]
+   },
+   "browser_action": {
+      "default_icon": "images/icon19.png",
+      "default_popup": "popup.html",
+      "default_title": "__MSG_name__"
+   },
+   "content_security_policy": "script-src 'self' https://ssl.google-analytics.com https://www.google.com https://wallet.google.com https://www.paypalobjects.com https://apps.jasonsavard.com; object-src 'self'",
+   "default_locale": "en",
+   "description": "__MSG_description__",
+   "icons": {
+      "128": "images/icon128.png",
+      "16": "images/icon19.png",
+      "19": "images/icon19.png",
+      "32": "images/icon32.png",
+      "48": "images/icon48.png"
+   },
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDdoA4cCsr2C1GUzWgGeZolaM4Yu4YOGJQtodzqwrT+QpoK5tlMMgMhC9anXfu0uqcIAK1Vnmk4E3mQMx7FiAETOXg3baQGRDN/FikvDydVoZTksbtaCr9wtB8Qk2sS4j43r/KOi0Jbx1ry7DvSCXvMPZEGG0MGUUYRXWr/Jbi5nQIDAQAB",
+   "manifest_version": 2,
+   "name": "__MSG_name__",
+   "optional_permissions": [ "http://imm.io/*", "http://files.chemicalservers.com/*" ],
+   "options_page": "options.html",
+   "permissions": [ "activeTab" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "6.7.5",
+   "web_accessible_resources": [ "donate.html" ]
+}

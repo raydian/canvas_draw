@@ -1,0 +1,38 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="css/common.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+	.hide {display:none}
+	body {margin:4px;font-family:  arial, "Trebuchet MS", "Lucida Grande", Verdana, sans-serif; font-size: 12px;color:black}
+	a {color:#000000;text-decoration:none}
+	a:hover {text-decoration:underline}
+	.menuitem {height:20px;line-height:20px;border-radius:4px;padding: 2px 4px;white-space:nowrap;vertical-align:middle}
+	.menuitem:hover {cursor:pointer;background:lightblue}
+	.menuitem img {height:16px;vertical-align:top;margin:2px 5px 0 0}
+	#otherExtensions {border-top:1px solid #ccc;margin-top:2px;padding-top:6px}
+	.disabled {opacity:0.3}
+	.disabled:hover {cursor:none;background:none}
+</style>
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/common.js" type="text/javascript"></script>
+<script src="js/popup.js" type="text/javascript"></script>
+</head>
+
+<body id="body">
+	<div id="justInstalled" class="hide" msg="justInstalled">You probably just installed this extension or an update has been done, so you'll need to <a id="reloadTab" style='text-decoration:underline' href='#' msg="justInstalled2">reload</a> this tab first or grab the <a id="justInstalledGrabVisibleArea" style='text-decoration:underline' href='#' msg="justInstalled3">visible part of page</a> instead!</div>
+	<div id="cannotCaptureWarning" class="yellowBubble centerHover">
+		<span msg="particularPages">These <a id="particularPages" msg="particularPages2" href="javascript:;" style="color:blue;text-decoration:underline">particular pages</a> cannot be captured due to Chrome's security policy, please try another page!</span>
+		<div id="particularPagesList" class="hide nowrap" style="font-size:11px;margin-top:5px;color:black">&bull; <span msg="pagesThatStartWith">Pages that start with</span> <b>chrome://</b><br>&bull; <span msg="pagesFromOtherExtensions">Pages from other extensions</span></div>
+	</div>
+
+	<div id="processing" style="text-align:center;z-level:999;opacity:0.95;display:none;width:120px;margin:32px 0;padding:0;font-size:120%;font-weight:bold"><span msg="capturing"></span>&nbsp;&nbsp;<img src="images/ajaxLoader.gif" align="absmiddle"/></div>
+	<div id="grabLinks">
+		<div id="selectedArea" class='menuitem'><img src="images/select.png"><span msg="grabSelectedArea"></span></div>
+		<div id="visibleArea" class='menuitem'><img src="images/visible.png"><span msg="grabVisiblePart"></span></div>
+		<div id="entirePage" class='menuitem'><img height=16 src="images/entirePage.png"><span msg="grabEntirePage"></span></div>
+		<div id="uploadImage" class="menuitem"><img height=16 src="images/upload.png"><span msg="uploadImage"></span></div>
+		<div id="otherExtensions" class="menuitem"><img height=16 src="images/GmailChecker.png"><span>Try my <span style="font-style:italic">Checker Plus for Gmail</span></span></div>
+	</div>
+</body>
+</html>
