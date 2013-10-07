@@ -819,14 +819,14 @@ var tool = {
 			if(this.status==0) { //starting select
 				c.strokeStyle = c.createPattern(dashed, 'repeat');
 				activateTempCanvas();
-				this.start = { x:m.x, y:m.y } 
+				this.start = { x:m.x, y:m.y }; 
 				this.status = 4;
 			} else if(this.status==3 || this.status==2) { //moving selection
 				if(intersects(m, this.start, this.dimension)) {
-					this.offset = { x:m.x-this.start.x, y:m.y-this.start.y } 
+					this.offset = { x:m.x-this.start.x, y:m.y-this.start.y };
 					if(this.status == 3 && !e.ctrlKey && !e.shiftKey) { //when first moving (and not in stamp mode), clear original pos and paint on tempcanvas
 						undoSave();
-						var pos = { x:m.x-this.offset.x, y:m.y-this.offset.y }						
+						var pos = { x:m.x-this.offset.x, y:m.y-this.offset.y };						
 						drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, ctemp);
 						ctemp.drawImage(canvassel, Math.floor(pos.x), Math.floor(pos.y));
 						c.fillStyle = FILL_STYLE;
@@ -838,7 +838,7 @@ var tool = {
 						c.drawImage(canvassel, Math.floor(this.start.x), Math.floor(this.start.y));
 					}
 					activateTempCanvas();
-					this.start = { x:m.x, y:m.y } 
+					this.start = { x:m.x, y:m.y };
 					this.status = 4;
 				}
 			}
@@ -1515,7 +1515,7 @@ function buttonDown(e, o) {
 	if(e.button != 2 && o.className != 'sel') { o.className='down'; } //not on rightclick
 }
 
-
+/*
 function save(onserver) {
     
   if(canvas.toDataURL) {
@@ -1532,20 +1532,18 @@ function save(onserver) {
   	alert('Sorry, your browser does not implement the toDataURL() method required to save images.');
   }
 }
+*/
 
-
+/*
 function saveonline(dataurl) {
-
 	var req = null;
 	iface.status.innerHTML="Saving to server...";
 
 	if (window.XMLHttpRequest) {
 	  req = new XMLHttpRequest();
-		//if (req.overrideMimeType) { req.overrideMimeType('text/xml'); }
 	} else {
 	  return;
 	}
-
 	req.onreadystatechange = function() { 
 		if(req.readyState == 4) {
 			if(req.status == 200) {
@@ -1561,19 +1559,22 @@ function saveonline(dataurl) {
 	req.send('u='+dataurl);
 
 }
+*/
 
+/*
 function menuOpen(e, o) {
 	iface.txy.innerHTML = o.parentNode.className; //todo remove after fixing menu bug
 	o.parentNode.className = (o.parentNode.className != 'open') ? 'open' : '';
 	e.stopPropagation();
 }
+*/
 
-
+/*
 var paint = {
  
   open: function(url) {
 	  alert('open');
-    if(url.indexOf('.') == -1) { url += '.png' }
+    if(url.indexOf('.') == -1) { url += '.png'; }
     if(url.indexOf('://') == -1) { url = 'http://canvaspaint.org/'+url; }
     var src = (url.indexOf('http://canvaspaint.org/') > -1) ? url.replace('http://canvaspaint.org', '') : 'open.php?u='+url;
     var img = document.createElement('img');
@@ -1584,11 +1585,12 @@ var paint = {
       clipResize(this.width, this.height);
       c.drawImage(this, 0, 0);
       iface.status.innerHTML = 'Opened '+url+'.';
-    }
+    };
     img.onerror = function() {
       alert('Error opening '+this.src);
       iface.status.innerHTML = '';
-    }
+    };
   }
     
-}
+};
+*/

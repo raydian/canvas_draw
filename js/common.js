@@ -475,6 +475,7 @@ function initMessages(node) {
 	*/
 }
 
+/*
 function donationClicked(action, ls) {
 	if (pref("donationClicked", null, ls)) {
 		return true;
@@ -491,6 +492,7 @@ function donationClicked(action, ls) {
 		return false;
 	}
 }
+*/
 
 function parseTime(timeString, date) {    
     if (!timeString) return null;
@@ -942,6 +944,7 @@ function facebookShare(url, msg) {
 }
 
 //return 1st active tab
+/*
 function getActiveTab(callback) {
 	chrome.tabs.query({'active': true}, function(tabs) {
 		if (tabs) {
@@ -959,7 +962,9 @@ function daysElapsedSinceFirstInstalled() {
 function isEligibleForReducedDonation() {
 	return (daysElapsedSinceFirstInstalled() >= (40) && !pref("donationClicked"));
 }
+*/
 
+/*
 function Controller() {
 	
 	// apps.jasonsavard.com server
@@ -1020,3 +1025,4 @@ function Controller() {
 		});
 	}
 }
+*/

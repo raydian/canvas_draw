@@ -1,25 +1,27 @@
 //var bg = chrome.extension.getBackgroundPage();
 
-var screenShotTab;
+//var screenShotTab;
 
-var DEBUG_PICT_DOWN = false;
-var DEBUG_IMM_DOWN = false;
+//var DEBUG_PICT_DOWN = false;
+//var DEBUG_IMM_DOWN = false;
 
-var globalImageURL;
+//var globalImageURL;
 var canvas;
 var canvastemp;
 var context;
 var contexttemp;
 var clickedTool;
 var canvasLeft;
-var ajaxObj;
-var aborted = false;
+//var ajaxObj;
+//var aborted = false;
 var hoveringOverFontSize = false;
 
+/*
 var immioOrigins = "http://imm.io/*";
 var immioGranted = false;
 var chemicalOrigins = "http://files.chemicalservers.com/*";
 var chemicalGranted = false;
+*/
 
 /*
 chrome.permissions.contains({origins: [immioOrigins]}, function(result) {
@@ -36,9 +38,11 @@ chrome.permissions.contains({origins: [chemicalOrigins]}, function(result) {
 
 var SCROLLBAR_WIDTH = 22; /***** duplpicated in popup.js ***/
 
+/*
 if (!window.BlobBuilder && window.WebKitBlobBuilder) {
 	window.BlobBuilder = window.WebKitBlobBuilder;
 }
+*/
 
 function writeText(str, context, x, y) {
 	if (context.fillText) {
@@ -48,6 +52,7 @@ function writeText(str, context, x, y) {
 	}
 }
 
+/*
 function watermarkImage() {
 	if (typeof canvas != "undefined" && canvas.width > 200) {
 		setShadow(false);
@@ -58,6 +63,7 @@ function watermarkImage() {
 		c.strokeStyle = c.fillStyle = drawingColor;
 	}
 }
+*/
 
 function setShadow(flag, offset) {
 	if (flag) {
@@ -78,7 +84,7 @@ function setShadow(flag, offset) {
 
 
 
-
+/*
 function postGrantedUpload(website) {
 	$("#uploadProcessing").show();
 	$("#uploadProcessingDone").hide();
@@ -95,6 +101,7 @@ function postGrantedUpload(website) {
 		return false;
 	});
 }
+*/
 
 $(document).ready(function() {
 	
@@ -115,7 +122,8 @@ $(document).ready(function() {
 	
 	function initFonts() {
 		var fontSize;
-		var fontSizePref = pref("fontSize", "normal");
+//		var fontSizePref = pref("fontSize", "normal");
+		var fontSizePref = "normal";
 		$(".fontSize").removeClass("selected");
 		if (fontSizePref.match(/small/i)) {
 			$("#fontSmall").addClass("selected");
@@ -203,7 +211,7 @@ $(document).ready(function() {
 			$("#editingInstructions").slideUp("fast", function() {
 				$("#textOptions").slideDown();
 			});
-			setShadow(true, 1)
+			setShadow(true, 1);
 			initTools();
 			c.tool = new tool.text();
 			document.getElementById("canvas").className = "text";
@@ -236,7 +244,7 @@ $(document).ready(function() {
 
 	$("#text").blur(function() {
 		if (!hoveringOverFontSize) {
-			console.log("text blur: " + hoveringOverFontSize)
+			console.log("text blur: " + hoveringOverFontSize);
 			//context.font = 'bold 18px sans-serif';
 			context.textBaseline = 'top';
 			c.fillStyle = c.strokeStyle;
@@ -246,7 +254,7 @@ $(document).ready(function() {
 			var lineHeight = 22;
 
 			var lines = $(this).val().split("\n");
-			for (a=0; a<lines.length; a++) {
+			for (var a=0; a<lines.length; a++) {
 				writeText(lines[a], context, x, y);
 				y += lineHeight;
 			}
@@ -261,7 +269,7 @@ $(document).ready(function() {
 	$("#colorPicker").click(function() {				
 		$("#colorGrid").toggle();
 		$("#colorGrid").css("left", $("#colorPicker").offset().left + "px");
-		sendGA(['_trackEvent', "colorPicker", "click"]);
+		//sendGA(['_trackEvent', "colorPicker", "click"]);
 	});
 	$(".color").click(function() {
 		var color = $(this).css("background-color");
@@ -274,11 +282,11 @@ $(document).ready(function() {
 
 	
 	$(".fontSize").click(function() {
-		if (donationClicked("fontSize")) {
-			console.log("fontsize");
-			localStorage["fontSize"] = $(this).attr("id");
-			initFonts();
-		}
+		console.log("fontsize");
+		localStorage["fontSize"] = $(this).attr("id");
+		initFonts();
+//		if (donationClicked("fontSize")) {
+//		}
 	}).mouseenter(function() {
 		hoveringOverFontSize = true;
 	}).mouseleave(function() {
@@ -289,6 +297,7 @@ $(document).ready(function() {
 	
 });
 
+/*
 function dataURItoBlob(d, k) {
     var j = atob(d.split(",")[1]);
     var c = d.split(",")[0].split(":")[1].split(";")[0];
@@ -299,11 +308,11 @@ function dataURItoBlob(d, k) {
     }
     var dataView = new DataView(g);
     var h = new Blob([dataView]);
-    //h.append(g);
-    //return h.getBlob(c)
     return h;
 }
+*/
 
+/*
 var saveAs = saveAs || (function(h) {
     var r = h.document,
         l = function() {
@@ -478,3 +487,4 @@ var saveAs = saveAs || (function(h) {
     h.addEventListener("unload", i, false);
     return a
 }(self));
+*/
