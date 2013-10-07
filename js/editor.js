@@ -105,19 +105,21 @@ function postGrantedUpload(website) {
 
 $(document).ready(function() {
 	
+	/*
 	if (localStorage.alwaysUpload) {
 		$("#gmailIssue").hide();
 		$(".makeDefault").hide();
 	} else {
 		$("#removeDefault").hide();
 	}
+	*/
 	
 
 
 	function initTools() {
-		if (lastToolUsed == "select") {
-			c.tool.down();
-		}
+//		if (lastToolUsed == "select") {
+//			c.tool.down();
+//		}
 	}
 	
 	function initFonts() {
@@ -151,9 +153,9 @@ $(document).ready(function() {
 			canvas = document.getElementById('canvas');
 			canvastemp = document.getElementById('canvastemp');
 			var rightMargin = 0;
-			if (localStorage.grabMethod == "entirePage") {
-				rightMargin = SCROLLBAR_WIDTH;
-			}
+//			if (localStorage.grabMethod == "entirePage") {
+//				rightMargin = SCROLLBAR_WIDTH;
+//			}
 			canvas.width = canvastemp.width = image.width - rightMargin;
 			
 			console.log("width of image: " + canvas.width);
@@ -162,7 +164,7 @@ $(document).ready(function() {
 			context = canvas.getContext('2d');
 			contexttemp = canvastemp.getContext('2d');
 			context.drawImage(image, 0, 0);
-			canvasLeft = $("canvas").offset().left;
+			canvasLeft = $("#canvas").offset().left;
 			$("#canvastemp").css("left", canvasLeft );
 			if (canvas.width < 600) {
 				$("#workspace").css("margin-top", "30px");
