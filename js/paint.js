@@ -1,3 +1,275 @@
+var drawboard = {
+
+		hoveringOverFontSize : false,
+		
+		initialize : function(canvas_id,canvastemp_id,workspace_id){
+			
+			this.drawingColor = 'red';
+			this.strokeFill = 1;
+			this.tertStyle = '#DDD';
+			
+			this.dashed = new Image();
+			this.dashed.src = 'images/dashed.gif';
+			this.FILL_STYLE = 'white';
+			this.lastToolUsed;
+			
+			this.canvas = document.getElementById(canvas_id);
+			this.canvastemp = document.getElementById(canvastemp_id);
+			this.workspace = document.getElementById(workspace_id);
+			this.context = this.canvas.getContext('2d');
+			this.contexttemp = this.canvastemp.getContext('2d');
+			this.textArea = $("#text");
+			
+			this.context.fillStyle = this.FILL_STYLE;
+			this.setDrawingColor('red');
+			this.context.tertStyle = this.tertStyle;
+			this.context.strokeFill = this.strokeFill;
+			
+			this.iface = { dragging:false, resizing:false, status:null, xy:null, txy:null };
+			this.iface.status = document.getElementById('status').firstChild;
+			this.iface.xy = document.getElementById('xy').firstChild;
+			this.iface.txy = document.getElementById('txy').firstChild;
+			
+			this.prefs = { pretty:false, controlpoints:false };
+			
+			//set up selection canvas (invisible, used for selections)
+			this.canvassel = document.getElementById("canvassel");
+			this.csel = this.canvassel.getContext("2d");
+
+			//set up undo canvas (invisible)
+			this.canvasundo = document.getElementById("canvasundo");
+			this.cundo = this.canvasundo.getContext("2d");			
+			
+			//this.updateImage(img_src);
+
+			
+		},
+		
+		canvas_height : function(height){
+			this.canvas.height = this.canvastemp.height = height;
+		},
+		
+		canvas_width : function(width){
+			this.canvas.width = this.canvastemp.width = width;
+		},
+		
+		updateImage : function(src){
+			var image = new Image();
+			image.src = src;
+			var _this = this;
+			image.onload = function() {
+				
+				console.log("load image: " + image.src);
+				_this.canvas.width = _this.canvastemp.width = image.width;
+				console.log("canvas width: " + _this.canvas.width);
+				_this.canvas.height = _this.canvastemp.height = image.height;
+				_this.context = _this.canvas.getContext('2d');
+				_this.contexttemp = _this.canvastemp.getContext('2d');
+				_this.context.drawImage(image, 0, 0);
+				_this.canvasLeft = $(_this.canvas).offset().left;
+				$(_this.canvastemp).css("left", _this.canvasLeft );
+				if (_this.canvas.width < 600) {
+					//$("#workspace").css("margin-top", "30px");
+				}
+				paint.initPaint(_this);
+//				initPaint();
+				_this.initFonts();
+				_this.setShadow(true);
+
+			};	
+			
+		},
+		
+		initFonts : function() {
+			var fontSize;
+//			var fontSizePref = pref("fontSize", "normal");
+			var fontSizePref = "normal";
+			$(".fontSize").removeClass("selected");
+			if (fontSizePref.match(/small/i)) {
+				$("#fontSmall").addClass("selected");
+				fontSize = 12;					
+			} else if (fontSizePref.match(/normal/i)) {
+				$("#fontNormal").addClass("selected");
+				fontSize = 18;
+			} else {
+				$("#fontLarge").addClass("selected");
+				fontSize = 30;
+			}
+			this.context.font = 'bold ' + fontSize + "px sans-serif";
+			this.textArea.css("font", this.context.font); 
+		},
+		
+		setShadow : function(flag, offset) {
+			if (flag) {
+				if (!offset) {
+					offset = 5;
+				}
+				this.context.shadowOffsetX = this.contexttemp.shadowOffsetX = offset;
+				this.context.shadowOffsetY = this.contexttemp.shadowOffsetY = offset;
+				this.context.shadowBlur = this.contexttemp.shadowBlur = 4;
+				this.context.shadowColor = this.contexttemp.shadowColor = "gray";
+			} else {
+				this.context.shadowOffsetX = this.contexttemp.shadowOffsetX = 0;
+				this.context.shadowOffsetY = this.contexttemp.shadowOffsetY = 0;
+				this.context.shadowBlur = this.contexttemp.shadowBlur = 0;
+				this.context.shadowColor = this.contexttemp.shadowColor = "none";
+			}
+		},
+		
+		writeText : function(str, context, x, y) {
+			if (context.fillText) {
+				context.fillText(str, x, y);
+			} else if (context.strokeText) {
+				context.strokeText(str, x, y);
+			}
+		},
+		
+		setDrawingColor : function(color) {
+			this.drawingColor = this.context.strokeStyle = color;
+		},
+		
+		bindEvent : function(){
+			var _draw = this;
+			//var c = _draw.context;
+			
+			$("#toolbar li img").click(function() {
+				_draw.setShadow(true);
+				clickedTool = $(this);
+				if (clickedTool.attr("src").indexOf("select") != -1) {
+					_draw.setShadow(false);
+					_draw.context.tool = new tool.select();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				} else if (clickedTool.attr("src").indexOf("ellipsis") != -1) {
+//					initTools();
+					_draw.context.tool = new tool.ellipse();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				} else if (clickedTool.attr("src").indexOf("blur") != -1) {
+					_draw.setShadow(false);
+//					initTools();
+					_draw.context.tool = new tool.eraser();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				} else if (clickedTool.attr("src").indexOf("rectangle") != -1) {
+//					initTools();
+					_draw.context.tool = new tool.rectangle();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				} else if (clickedTool.attr("src").indexOf("drawFreehand") != -1) {
+//					initTools();
+					_draw.context.tool = new tool.pencil();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				} else if (clickedTool.attr("src").indexOf("line") != -1) {
+//					initTools();
+					_draw.context.tool = new tool.line();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				} else if (clickedTool.attr("src").indexOf("text") != -1) {
+					console.log("text clicked");
+					$("#editingInstructions").slideUp("fast", function() {
+						$("#textOptions").slideDown();
+					});
+					_draw.setShadow(true, 1);
+//					setShadow(true, 1);
+//					initTools();
+					_draw.context.tool = new tool.text();
+					_draw.canvas.className = "text";
+//					document.getElementById("canvas").className = "text";
+				} else if (clickedTool.attr("src").indexOf("undo") != -1) {
+					undo();
+					return;
+				} else if (clickedTool.attr("src").indexOf("refresh") != -1) {
+					window.location.reload();
+					return;
+				} else {
+//					initTools();
+					_draw.context.tool = new tool.arrow();
+					_draw.canvas.className = "line";
+//					document.getElementById("canvas").className = "line";
+				}
+				
+				
+				if (!clickedTool.attr("src").match("text")) {
+					$("#textOptions").fadeOut();
+				}
+				
+				$("#toolbar li img").each(function(i) {
+					if (clickedTool.attr("src") == $(this).attr("src")) {
+						var newSrc = $(this).attr("src").replace("Off", "On");
+						$(this).attr("src", newSrc);
+					} else {
+						var newSrc = $(this).attr("src").replace("On", "Off");
+						$(this).attr("src", newSrc);
+					}
+				});
+			});
+
+
+			$("#colorPicker").click(function() {
+				$("#colorGrid").toggle();
+				$("#colorGrid").css("left", $("#colorPicker").offset().left + "px");
+				//sendGA(['_trackEvent', "colorPicker", "click"]);
+			});
+			$(".color").click(function() {
+				var color = $(this).css("background-color");
+				_draw.setDrawingColor(color);
+//				setDrawingColor(color);
+				$("#colorPicker").css("background-color", color);
+				textArea.css("color", color);
+				$("#colorGrid").hide();
+			});
+
+
+			$("#text").blur(function() {
+				if (!_draw.hoveringOverFontSize) {
+//					console.log("text blur: " + hoveringOverFontSize);
+					//context.font = 'bold 18px sans-serif';
+					_draw.context.textBaseline = 'top';
+					_draw.context.fillStyle = _draw.context.strokeStyle;
+
+					var x = $(this).position().left - _draw.canvasLeft + 1;
+					var y = $(this).position().top - 1;
+					var lineHeight = 22;
+
+					var lines = $(this).val().split("\n");
+					for (var a=0; a<lines.length; a++) {
+						_draw.writeText(lines[a], _draw.context, x, y);
+						y += lineHeight;
+					}
+
+					$(this).hide();
+					_draw.workspace.className = "text";
+//					document.getElementById("workspace").className = "text";
+				}
+			});
+
+
+
+			
+			$(".fontSize").click(function() {
+				//console.log("fontsize");
+				//localStorage["fontSize"] = $(this).attr("id");
+//				initFonts();
+				_draw.initFonts();
+//				if (donationClicked("fontSize")) {
+//				}
+			}).mouseenter(function() {
+				_draw.hoveringOverFontSize = true;
+//				hoveringOverFontSize = true;
+			}).mouseleave(function() {
+				_draw.hoveringOverFontSize = false;
+//				hoveringOverFontSize = false;
+			});
+			
+			
+		}
+		
+		
+};
+
+
 var paint = {
 		
 		initPaint : function(board){
@@ -15,7 +287,7 @@ var paint = {
 		},
 		
 		shortcuts : function(e) {
-			var c = this.board.context;
+			var c = drawboard.context;
 			if(e.keyCode == 46) { //delete
 				if(c.tool.name == 'select' && c.tool.status > 0) { //del selection
 					c.tool.del();
@@ -48,9 +320,9 @@ var paint = {
 		
 
 		sel_cancel:function() {
-			c = this.board.context;
-			canvastemp = this.board.canvastemp;
-			ctemp = this.board.contexttemp;
+			c = drawboard.context;
+			canvastemp = drawboard.canvastemp;
+			ctemp = drawboard.contexttemp;
 			if (c.tool.status == 2) {
 				if (ctemp && ctemp.start) {
 					c.drawImage(canvassel, Math.floor(ctemp.start.x), Math.floor(ctemp.start.y));
@@ -97,10 +369,10 @@ var paint = {
 
 		getxy:function(e, o) {
 		//gets mouse position relative to object o
-			c = this.board.context;
-			wsp = this.board.workspace;
+			c = drawboard.context;
+			wsp = drawboard.workspace;
 			if(c) {
-				var bo = this.getpos(o);
+				var bo = paint.getpos(o);
 				var x = e.clientX - bo.x + wsp.scrollLeft;	//correct for canvas position, workspace scroll offset
 				var y = e.clientY - bo.y + wsp.scrollTop;									
 				x += document.documentElement.scrollLeft;	//correct for window scroll offset
@@ -134,21 +406,22 @@ var paint = {
 
 
 		getPixel:function(x, y) {
-		  if(imgd || c.getImageData) {
-		      return false;
-		  } else if (window.opera) {
-		    if(!co) { co = this.board.canvas.getContext('opera-2dgame');	}
-		    col = co.getPixel(x, y);
-		    return col;
-		  } else {
-		    return false; 
-		  }
+			c = this.board.context;
+			if(imgd || c.getImageData) {
+			     return false;
+			} else if (window.opera) {
+			  if(!co) { co = this.board.canvas.getContext('opera-2dgame');	}
+			  col = co.getPixel(x, y);
+			   return col;
+			}else{
+			   return false; 
+			}
 		}, 
 
 		c_down:function(e) {
 			//handles mousedown on the canvas depending on tool selected
-			c = this.board.context;
-			m = this.getxy(e, this.board.canvas);
+			c = drawboard.context;
+			m = paint.getxy(e, drawboard.canvas);
 
 			if(c.tool.name != 'select' && c.tool.name != 'eraser' && c.tool.name != 'picker') { //no color switching for these
 				if(e.ctrlKey) {							 //ctrl: switch tert & stroke
@@ -171,15 +444,15 @@ var paint = {
 
 
 		c_up:function(e) {
-			this.board.lastToolUsed = c.tool.name;
-			c = this.board.context;
+			drawboard.lastToolUsed = c.tool.name;
+			c = drawboard.context;
 			//handles mouseup on the canvas depending on tool selected
 			$("#refresh, #undo").css("visibility", "visible");
 
-			m = this.getxy(e, this.board.canvas);
+			m = paint.getxy(e, drawboard.canvas);
 
 			e.stopPropagation();
-			if(this.board.iface.dragging || this.board.iface.resizing || c.resizing) { this.bodyUp(e); } //but not if dragging
+			if(drawboard.iface.dragging || drawboard.iface.resizing || c.resizing) { paint.bodyUp(e); } //but not if dragging
 
 			c.tool.up(e);
 			if(c.tool.name != 'select' && c.tool.name != 'eraser' && c.tool.name != 'picker') { //no color switching for these
@@ -200,54 +473,55 @@ var paint = {
 		},
 
 		c_move:function(e) {
-			c = this.board.context;
-			m = getxy(e, this.board.canvas);
+			c = drawboard.context;
+			m = paint.getxy(e, drawboard.canvas);
 			e.stopPropagation();
-			if(this.board.iface.dragging || this.board.iface.resizing || c.resizing) { this.bodyMove(e); } //don't stop propagation if dragging
+			if(drawboard.iface.dragging || drawboard.iface.resizing || c.resizing) { paint.bodyMove(e); } //don't stop propagation if dragging
 
 			if(c.tool.status > 0 && c.tool.move) {
 				c.tool.move(e);
 			}
 
 			if(c.tool.start && c.tool.status > 0) {
-				this.board.iface.xy.innerHTML = Math.round(c.tool.start.x)+', '+Math.round(c.tool.start.y);
+				drawboard.iface.xy.innerHTML = Math.round(c.tool.start.x)+', '+Math.round(c.tool.start.y);
 			} else {
-				this.board.iface.xy.innerHTML = Math.round(m.x)+', '+Math.round(m.y);
+				drawboard.iface.xy.innerHTML = Math.round(m.x)+', '+Math.round(m.y);
 			}
 			return false;
 		},
 
 		c_out:function(e) {
 			//var source = e.currentTarget;
-			c = this.board.context;
+			c = drawboard.context;
 			if(c && (c.tool.name=='pencil' || c.tool.name=='eraser' || c.tool.name=='brush') && c.tool.status==1) { 
 				c.tool.disconnected = 1;
-				m = this.getxy(e, this.board.canvas);
+				m = paint.getxy(e, drawboard.canvas);
 				c.tool.draw();
 				//iface.status.innerHTML = 'c_out: '+m.x+'/'+m.y+' '+c.fillStyle;
 			}
 
-			this.board.iface.xy.innerHTML = '&nbsp;';
+			drawboard.iface.xy.innerHTML = '&nbsp;';
 		},
 
 
 		bodyMove:function(e) {
 		//lets the user move outside the canvas while drawing shapes and lines
-			c = this.board.context;
-			if(c.tool.status > 0) { c_move(e); }	
+			c = drawboard.context;
+			wsp = drawboard.workspace;
+			if(c.tool.status > 0) { paint.c_move(e); }	
 
 			if(c.resizing) {
-				m = this.getxy(e, document.body);
+				m = paint.getxy(e, document.body);
 				var win = wsp.parentNode.parentNode.parentNode;
-				this.board.contexttemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-				this.board.contexttemp.strokeRect(0, 0, m.x, m.y); //dotted line
-			} else if(this.board.iface.dragging) {
-				m = this.getxy(e, document.body);
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+				drawboard.contexttemp.strokeRect(0, 0, m.x, m.y); //dotted line
+			} else if(drawboard.iface.dragging) {
+				m = paint.getxy(e, document.body);
 				var win = wsp.parentNode.parentNode.parentNode;
 				win.style.left = e.clientX-c.start.x+'px';
 				win.style.top = e.clientY-c.start.y+'px';
-			} else if(this.board.iface.resizing) {
-				m = this.getxy(e, document.body);
+			} else if(drawboard.iface.resizing) {
+				m = paint.getxy(e, document.body);
 				var win = wsp.parentNode.parentNode.parentNode;
 				win.style.width = e.clientX-win.offsetLeft+c.start.x+3+'px';
 				win.style.height = e.clientY-win.offsetTop+c.start.y+3+'px';
@@ -257,22 +531,27 @@ var paint = {
 		},
 
 		bodyUp:function(e) {
+			c = drawboard.context;
+			wsp = drawboard.workspace;
+			iface = drawboard.iface;
 			//stops drawing even if mouseup happened outside canvas
 			//closes menus if clicking somewhere else
 			if(c.resizing) {
-				c.resizing = false; document.body.style.cursor = 'auto'; canvastemp.style.cursor = canvastemp.lastCursor;
-				m = getxy(e, wsp);
-				clipResize(m.x-3, m.y-3);
+				c.resizing = false; document.body.style.cursor = 'auto'; drawboard.canvastemp.style.cursor = drawboard.canvastemp.lastCursor;
+				m = paint.getxy(e, wsp);
+				tool.clipResize(m.x-3, m.y-3);
 			}
 			if(iface.dragging) { iface.dragging = false; }
 			if(iface.resizing) { iface.resizing = false; document.body.style.cursor = 'auto'; }
 
 			if(c.tool.name == 'select') { //cancel selection or finalize selection move
-			    sel_cancel();
+				paint.sel_cancel();
+//			    sel_cancel();
 			}
 
 			if(c && c.tool.name != 'polygon' && c.tool.status > 0) {
-				c_up(e);
+				paint.c_up(e);
+//				c_up(e);
 			}
 		}
 		
@@ -287,20 +566,24 @@ var tool = {
 	_shapes: function() {
 
 		this.down = this._down = function() {
-			undoSave();
-			activateTempCanvas();
+			this.undoSave();
+//			undoSave();
+			this.activateTempCanvas();
+//			activateTempCanvas();
 			this.start = { x:m.x, y:m.y };
 			this.status = 1;
-			c.beginPath();
+			drawboard.context.beginPath();
 		};
+		
 		this._move = function() {
-			ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-			iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
+			drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+			drawboard.iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
 		};
+		
 		this._up = function() {
-			canvastemp.style.display='none';
+			drawboard.canvastemp.style.display='none';
 			this.status = 0;
-			iface.txy.innerHTML = '&nbsp;';
+			drawboard.iface.txy.innerHTML = '&nbsp;';
 		};
 
 	},
@@ -312,12 +595,14 @@ var tool = {
 			this.cp = null;
 			this.lastcp = null;
 			this.disconnected = null;
-			c.beginPath();
+			drawboard.context.beginPath();
 
-			undoSave();
+//			undoSave();
+			this.undoSave();
 			this.sstart = this.last = { x:m.x, y:m.y }; //extra s in sstart to not affect status bar display
 			this.status = 1;
 		};
+		
 		this.move = function(e) { 
 
 			if(this.disconnected) {	//re-entering canvas: dont draw a line
@@ -327,19 +612,21 @@ var tool = {
 			} else {				//draw connecting line
 				this.draw();
 			}
-			c.moveTo(m.x, m.y);
+			drawboard.context.moveTo(m.x, m.y);
 
 		};
+		
 		this.up = function() {
 			if(this.sstart && this.sstart.x == m.x && this.sstart.y == m.y) {
-				drawDot(m.x, m.y, c.lineWidth, c.strokeStyle);
+				this.drawDot(m.x, m.y, drawboard.context.lineWidth, drawboard.context.strokeStyle);
 			}
 			this.sstart = null;
 			this.status = 0;
 		};
+		
 		this.draw = function() {
 
-			if(prefs.pretty) { 
+			if(drawboard.prefs.pretty) { 
 
 				//calculate control point
 				this.cp = { x:m.x, y:m.y }; //default: no bezier	
@@ -356,20 +643,20 @@ var tool = {
 				}
 				this.lastcp = { x:this.cp.x, y:this.cp.y };
 
-				c.bezierCurveTo(this.cp.x, this.cp.y, m.x, m.y, m.x, m.y);  //make pretty curve, first two params =control pt
-				c.stroke();	
-				c.beginPath();
-				if(prefs.controlpoints) { 
-					if(!(this.cp.x==m.x && this.cp.y==m.y)) { drawDot(this.cp.x, this.cp.y, 3, 'blue'); }
-					drawDot(this.last.x, this.last.y, 3, 'red');
+				drawboard.context.bezierCurveTo(this.cp.x, this.cp.y, m.x, m.y, m.x, m.y);  //make pretty curve, first two params =control pt
+				drawboard.context.stroke();	
+				drawboard.context.beginPath();
+				if(drawboard.prefs.controlpoints) {
+					if(!(this.cp.x==m.x && this.cp.y==m.y)) { this.drawDot(this.cp.x, this.cp.y, 3, 'blue'); }
+					this.drawDot(this.last.x, this.last.y, 3, 'red');
 				}
 
 			} else { //unpretty
-				c.lineTo(m.x, m.y);
-				c.stroke();	
-				c.beginPath();
-				if(prefs.controlpoints) { 
-					drawDot(m.x, m.y, 3, 'red');
+				drawboard.context.lineTo(m.x, m.y);
+				drawboard.context.stroke();	
+				drawboard.context.beginPath();
+				if(drawboard.prefs.controlpoints) {
+					this.drawDot(m.x, m.y, 3, 'red');
 				}
 			}
 				
@@ -383,10 +670,10 @@ var tool = {
 		this.status = 0;
 		this.inherit = tool._brushes; this.inherit();
 
-		c.lineCap = 'butt';
-		c.lineWidth = 3;
+		drawboard.context.lineCap = 'butt';
+		drawboard.context.lineWidth = 3;
 
-		c.strokeStyle = c.fillStyle = drawingColor;
+		drawboard.context.strokeStyle = drawboard.context.fillStyle = drawboard.drawingColor;
 	},
 
 	brush: function() {
@@ -400,17 +687,17 @@ var tool = {
 		this.status = 0;
 		this.inherit = tool._shapes; this.inherit();
 
-		c.strokeStyle = c.fillStyle = drawingColor;
+		drawboard.context.strokeStyle = drawboard.context.fillStyle = drawboard.drawingColor;
 
 		this.down = function(e) {
 			this._down();
 			if ($("#text").is(":visible")) {
 				$("#text").blur();
-				document.getElementById("canvas").className = "text";
+				drawboard.canvas.className = "text";
 			} else {
-				var width = Math.min(300, $("canvas").width() - m.x + 6);
-				var height = Math.min(80, $("canvas").height() - m.y + 13);
-				$("#text").css("left", $("canvas").offset().left + m.x - 2).TextAreaExpander(height).css("top", m.y - 10).css("width", width).css("height", height).val("").show().focus();
+				var width = Math.min(300, $(drawboard.canvas).width() - m.x + 6);
+				var height = Math.min(80, $(drawboard.canvas).height() - m.y + 13);
+				$("#text").css("left", $(drawboard.canvas).offset().left + m.x - 2).TextAreaExpander(height).css("top", m.y - 10).css("width", width).css("height", height).val("").show().focus();
 				//document.getElementById("canvas").className = "auto";
 			}
 		};
@@ -430,11 +717,11 @@ var tool = {
 		alert(this.x)
 		blurImage(canvas, canvas, this.start.x, this.start.y, this.start.x + 20, this.start.y + 20);
 		*/
-		c.lineCap = 'ellipse';
-		c.lineWidth = 12;
-		c.lastStrokeStyle = c.strokeStyle;
+		drawboard.context.lineCap = 'ellipse';
+		drawboard.context.lineWidth = 12;
+		drawboard.context.lastStrokeStyle = drawboard.context.strokeStyle;
 		//c.globalAlpha = 0.5;
-		c.strokeStyle = "#aaa"; //c.fillStyle; //'#FFF'; //selCol('#FFF');
+		drawboard.context.strokeStyle = "#aaa"; //c.fillStyle; //'#FFF'; //selCol('#FFF');
 	},
 
 	line: function() {
@@ -443,17 +730,17 @@ var tool = {
 		this.status = 0;
 		this.inherit = tool._shapes; this.inherit();
 
-		c.lineCap = 'round';
-		c.lineWidth = 3;
-		c.strokeStyle = c.fillStyle = drawingColor;
+		drawboard.context.lineCap = 'round';
+		drawboard.context.lineWidth = 3;
+		drawboard.context.strokeStyle = drawboard.context.fillStyle = drawboard.drawingColor;
 
 		this.move = function(e) {
 			this._move();
-			drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+			this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
 		};
 		this.up = function(e) {
 			this._up();
-			drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
+			this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
 		};
 
 	},
@@ -464,17 +751,17 @@ var tool = {
 		this.status = 0;
 		this.inherit = tool._shapes; this.inherit();
 
-		c.lineCap = 'round';
-		c.lineWidth = 3;
-		c.strokeStyle = c.fillStyle = drawingColor;
+		drawboard.context.lineCap = 'round';
+		drawboard.context.lineWidth = 3;
+		drawboard.context.strokeStyle = drawboard.context.fillStyle = drawboard.drawingColor;
 
 		this.move = function(e) {
 			this._move();
-			drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+			this.drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
+			this.drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -486,16 +773,16 @@ var tool = {
 		this.status = 0;
 		this.inherit = tool._shapes; this.inherit();
 
-		c.lineWidth = 3;
-		c.strokeStyle = c.fillStyle = drawingColor;
+		drawboard.context.lineWidth = 3;
+		drawboard.context.strokeStyle = drawboard.context.fillStyle = drawboard.drawingColor;
 
 		this.move = function(e) {
 			this._move();
-			drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+			this.drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
+			this.drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -507,22 +794,22 @@ var tool = {
 		this.status = 0;
 		this.inherit = tool._shapes; this.inherit();
 
-		c.lineWidth = 3;
-		c.strokeStyle = c.fillStyle = drawingColor;
+		drawboard.context.lineWidth = 3;
+		drawboard.context.strokeStyle = drawboard.context.fillStyle = drawboard.drawingColor;
 
 		this.down = function(e) {
 			this._down();
-			this.lastLineWidth = c.lineWidth;
-			if(c.strokeFill == 3) { c.lineWidth+=1.1; ctemp.lineWidth+=1.1; } //hm
+			this.lastLineWidth = drawboard.context.lineWidth;
+			if(drawboard.context.strokeFill == 3) { drawboard.context.lineWidth+=1.1; drawboard.contexttemp.lineWidth+=1.1; } //hm
 		};
 		this.move = function(e) {
 			this._move();
-			drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+			this.drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
-			if(c.strokeFill == 3) { c.lineWidth = this.lastLineWidth; ctemp.lineWidth = this.lastLineWidth; }
+			this.drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
+			if(drawboard.context.strokeFill == 3) { drawboard.context.lineWidth = this.lastLineWidth; drawboard.contexttemp.lineWidth = this.lastLineWidth; }
 		};
 
 	},
@@ -536,11 +823,11 @@ var tool = {
 		
 		this.move = function(e) {
 			this._move();
-			drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+			this.drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
+			this.drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -551,63 +838,65 @@ var tool = {
 		this.name = 'curve';
 		this.status = 0;
 
-		c.lineCap = 'round';
-		c.lineWidth = 1;
+		drawboard.context.lineCap = 'round';
+		drawboard.context.lineWidth = 1;
 
 		this.down = function() {
 			if(this.status==0) { //starting
-				undoSave();
-				activateTempCanvas();
+				this.undoSave();
+//				undoSave();
+				this.activateTempCanvas();
+//				activateTempCanvas();
 				this.start = { x:m.x, y:m.y };
 				this.end = null;
 				this.bezier1 = null;
 				this.status = 5;
-				c.beginPath();
+				drawboard.context.beginPath();
 			} else if(this.status==4 || this.status==2) { //continuing
 				this.status--;
 			}
 		};
 		this.move = function(e) { 
 			if(this.status==5) {
-
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-				drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
-				ctemp.stroke();
-				iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+				this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+				drawboard.contexttemp.stroke();
+				drawboard.iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
 
 			} else if(this.status == 3 || this.status == 1) {
 
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
 
-				ctemp.moveTo(this.start.x, this.start.y);
+				drawboard.contexttemp.moveTo(this.start.x, this.start.y);
 				var b1x = (this.bezier1) ? this.bezier1.x : m.x;
 				var b1y = (this.bezier1) ? this.bezier1.y : m.y;
 				var b2x = (this.bezier1) ? m.x : this.end.x;
 				var b2y = (this.bezier1) ? m.y : this.end.y;
 
-				ctemp.bezierCurveTo(b1x, b1y, b2x, b2y, this.end.x, this.end.y);
-				ctemp.stroke();
-				iface.txy.innerHTML = Math.round(this.end.x-this.start.x)+'x'+Math.round(this.end.y-this.start.y);
+				drawboard.contexttemp.bezierCurveTo(b1x, b1y, b2x, b2y, this.end.x, this.end.y);
+				drawboard.contexttemp.stroke();
+				drawboard.iface.txy.innerHTML = Math.round(this.end.x-this.start.x)+'x'+Math.round(this.end.y-this.start.y);
 			}
 		};
+		
 		this.up = function() {
 			if(this.status==5) { //setting endpoint     // && source.id != 'body'
-				this.end = { x:m.x, y:m.y }
+				this.end = { x:m.x, y:m.y };
 				this.status = 4;
 			} else if(this.status==3) { //setting bezier1  && source.id != 'body'
-				this.bezier1 = { x:m.x, y:m.y }
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-				ctemp.moveTo(this.start.x, this.start.y);
-				ctemp.bezierCurveTo(m.x, m.y, this.end.x, this.end.y, this.end.x, this.end.y);
-				ctemp.stroke();
+				this.bezier1 = { x:m.x, y:m.y };
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+				drawboard.contexttemp.moveTo(this.start.x, this.start.y);
+				drawboard.contexttemp.bezierCurveTo(m.x, m.y, this.end.x, this.end.y, this.end.x, this.end.y);
+				drawboard.contexttemp.stroke();
 				this.status = 2;
 			} else if(this.status==1) { //setting bezier2  && source.id != 'body'
-				canvastemp.style.display='none';
-				c.moveTo(this.start.x, this.start.y);
-				c.bezierCurveTo(this.bezier1.x, this.bezier1.y,  m.x, m.y, this.end.x, this.end.y);
-				c.stroke();
+				drawboard.canvastemp.style.display='none';
+				drawboard.context.moveTo(this.start.x, this.start.y);
+				drawboard.context.bezierCurveTo(this.bezier1.x, this.bezier1.y,  m.x, m.y, this.end.x, this.end.y);
+				drawboard.context.stroke();
 				this.status = 0;
-				iface.txy.innerHTML = '&nbsp;';
+				drawboard.iface.txy.innerHTML = '&nbsp;';
 			}
 		};
 	
@@ -622,58 +911,61 @@ var tool = {
 
 		this.down = function() {
 			if(this.status==0) { //starting poly
-				undoSave();
-				activateTempCanvas();
-				this.start = { x:m.x, y:m.y } 
+//				undoSave();
+				this.undoSave();
+				this.activateTempCanvas();
+//				activateTempCanvas();
+				this.start = { x:m.x, y:m.y };
 				this.last = null;
 				this.status = 3;
 				this.points = new Array();
-				c.beginPath();
+				drawboard.context.beginPath();
 			} else if(this.status==1) { //adding points
 				this.status = 2;
 			}	
 		};
-		this.move = function(e) { 
+		this.move = function(e) {
 			if(this.status == 3) { //first polyline
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-				drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+				this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 			} else if(this.status == 2) { // next polyline
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-				drawLine(this.last.x, this.last.y, m.x, m.y, e.shiftKey, ctemp);
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+				this.drawLine(this.last.x, this.last.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 			}
-			iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
+			drawboard.iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
 		};
 		this.up = function(e) {
 			if(Math.abs(m.x-this.start.x) < 4 && Math.abs(m.y-this.start.y) < 4) { //closing
 				this.close();
 			} else {
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
 				var fromx = (this.status==2) ? this.last.x : this.start.x;
 				var fromy = (this.status==2) ? this.last.y : this.start.y;
-				var end = drawLine(fromx, fromy, m.x, m.y, e.shiftKey, c); //TODO cant drawline on c yet...3rd canvas??
+				var end = this.drawLine(fromx, fromy, m.x, m.y, e.shiftKey, drawboard.context); //TODO cant drawline on c yet...3rd canvas??
 				this.last = { x:m.x, y:m.y };
 				this.points[this.points.length] = { x:m.x, y:m.y };
 				this.status = 1;
 			}
 			trg.stroke();
 		};
+		
 		this.close = function() {
 			if(this.last.x) { // not just started			
-				c.beginPath();
-				c.moveTo(this.start.x, this.start.y);
+				drawboard.context.beginPath();
+				drawboard.context.moveTo(this.start.x, this.start.y);
 				for(var i=0; i<this.points.length; i++) {
-					c.lineTo(this.points[i].x, this.points[i].y);
+					drawboard.context.lineTo(this.points[i].x, this.points[i].y);
 				}
-				c.lineTo(this.last.x, this.last.y);
-				c.lineTo(this.start.x, this.start.y);
-				if(c.strokeFill == 2 || c.strokeFill == 3) { c.fill(); }
-				if(c.strokeFill == 1 || c.strokeFill == 3) { c.stroke(); }
+				drawboard.context.lineTo(this.last.x, this.last.y);
+				drawboard.context.lineTo(this.start.x, this.start.y);
+				if(drawboard.context.strokeFill == 2 || drawboard.context.strokeFill == 3) { drawboard.context.fill(); }
+				if(drawboard.context.strokeFill == 1 || drawboard.context.strokeFill == 3) { drawboard.context.stroke(); }
 
-				c.fill();
+				drawboard.context.fill();
 			} else {
 				//iface.txy.innerHTML = 'aborted';
 			}
-			canvastemp.style.display='none';
+			drawboard.canvastemp.style.display='none';
 			this.status = 0;
 		};
 
@@ -685,11 +977,11 @@ var tool = {
 		this.name = 'airbrush';
 		this.status = 0;
 
-		c.lineCap = 'square';
+		drawboard.context.lineCap = 'square';
 
 		this.down = function() {
-			undoSave();
-			this.drawing = setInterval(c.tool.draw, 50);
+			this.undoSave();
+			this.drawing = setInterval(drawboard.context.tool.draw, 50);
 			this.last = { x:m.x, y:m.y };
 			this.lineCap = 'square';
 			this.status = 1;
@@ -704,6 +996,7 @@ var tool = {
 		
 		this.draw = function() {
 			//iface.txy.innerHTML = this.last.x+'/'+this.last.y;
+			c = drawboard.context;
 			c.save();
 			c.beginPath();
 			c.arc(this.last.x, this.last.y, c.lineWidth*4, 0, Math.PI*2, true);
@@ -711,7 +1004,7 @@ var tool = {
 			for(var i=c.lineWidth*15; i>0; i--) {
 				var rndx = c.tool.last.x + Math.round(Math.random()*(c.lineWidth*8)-(c.lineWidth*4));
 				var rndy = c.tool.last.y + Math.round(Math.random()*(c.lineWidth*8)-(c.lineWidth*4));
-				drawDot(rndx, rndy, 1, c.strokeStyle);
+				this.drawDot(rndx, rndy, 1, c.strokeStyle);
 			}
 			c.restore();
 		};
@@ -720,18 +1013,6 @@ var tool = {
 	},
 
 
-	zoom: function() {
-
-		this.name = 'zoom';
-		this.status = 0;
-
-		this.down = function() {
-			zoomTo(c.selectedzoom);
-		};
-		this.move = function() { };
-		this.up = function() { };
-
-	},
 
 	picker: function() { 
 
@@ -739,9 +1020,9 @@ var tool = {
 		this.status = 0;
 
 		this.down = function(e) {
-			csel.drawImage(canvas, m.x, m.y, 1, 1, 0, 0, canvassel.width, canvassel.height);
-			var pat = c.createPattern(canvassel, 'repeat');
-			selCol2(pat, e);
+			drawboard.csel.drawImage(drawboard.canvas, m.x, m.y, 1, 1, 0, 0,drawboard.canvassel.width, drawboard.canvassel.height);
+			var pat = drawboard.context.createPattern(drawboard.canvassel, 'repeat');
+			this.selCol2(pat, e);
 			//selTool(document.getElementById(c.lastTool));
 		};
 		this.move = function() { };
@@ -757,13 +1038,15 @@ var tool = {
 		
 		this.down = function(e) {
 		    
-  			undoSave();
+  			this.undoSave();
 		  
         //var imgd = c.getImageData(0, 0, canvas.width, canvas.height);
         var x = Math.round(m.x);
         var y = Math.round(m.y);
+        var c = drawboard.context;
+        var iface = drawboard.iface;
 
-        var oldColor = getPixel(x, y);
+        var oldColor = this.getPixel(x, y);
         if(!oldColor) { alert('Sorry, your browser doesn\'t support flood fill.'); return false; } 
         if(oldColor == c.strokeStyle) { return; }
         
@@ -776,16 +1059,18 @@ var tool = {
         while(popped = stack.pop()) {
             //n++;
             //iface.txy.innerHTML = 'while'+n;
+        	var c = drawboard.context;
             var x = popped.x;   
             var y1 = popped.y;
-            while(getPixel(x, y1) == oldColor && y1 >= 0) { y1--; }
+            while(this.getPixel(x, y1) == oldColor && y1 >= 0) { y1--; }
             y1++;
             var spanLeft = false;
             var spanRight = false;
-            while(getPixel(x, y1) == oldColor && y1 < canvas.height) {
+            while(this.getPixel(x, y1) == oldColor && y1 < drawboard.canvas.height) {
                 //iface.xy.innerHTML = x+'/'+y1;
-                if(window.opera) { 
-                  co.setPixel(x, y1, c.strokeStyle);
+                if(window.opera) {
+                	co = drawboard.canvas.getContext('opera-2dgame');
+                	co.setPixel(x, y1, c.strokeStyle);
                 } else {
                   //c.beginPath();
                   c.fillStyle = c.strokeStyle;
@@ -793,26 +1078,27 @@ var tool = {
                   //drawDot(x, y1, 1, c.strokeStyle, c);
                   //document.getElementById('info').innerHTML += '<br />'+x+'/'+y1;
                 }
-                if(!spanLeft && x > 0 && getPixel(x-1, y1) == oldColor) {
+                if(!spanLeft && x > 0 && this.getPixel(x-1, y1) == oldColor) {
                   //break;
                    stack.push({x:x-1, y:y1});        
                     spanLeft = true;
-                } else if(spanLeft && x > 0 && getPixel(x-1, y1) != oldColor) {
+                } else if(spanLeft && x > 0 && this.getPixel(x-1, y1) != oldColor) {
                     spanRight = false;
                 } else if(spanRight && x <= 0) { spanRight = false; }
-                if(!spanRight && x < canvas.width-1 && getPixel(x+1, y1) == oldColor) {
+                if(!spanRight && x < drawboard.canvas.width-1 && this.getPixel(x+1, y1) == oldColor) {
                   //break;
                   stack.push({x:x+1, y:y1});
                     spanRight = true;
-                } else if(spanRight && x < canvas.width-1 && getPixel(x+1, y1) != oldColor) {
+                } else if(spanRight && x < drawboard.canvas.width-1 && this.getPixel(x+1, y1) != oldColor) {
                     spanRight = false;
-                } else if(spanRight && x >= canvas.width) { spanRight = false; }
+                } else if(spanRight && x >= drawboard.canvas.width) { spanRight = false; }
                 y1++;                   
             }
         }        
         
         
         if(window.opera) {
+        	co = drawboard.canvas.getContext('opera-2dgame');
           co.lockCanvasUpdates(false);
           co.updateCanvas();
         }
@@ -831,85 +1117,91 @@ var tool = {
 
 		this.name = 'select';
 		this.status = 0;
-
+		c = drawboard.context;
 		c.lastTool = c.tool.name;
 		c.lineWidth = 1;
 		c.lastStrokeStyle = c.strokeStyle;
 		c.strokeStyle = c.createPattern(dashed, 'repeat');
 		//c.strokeFill = 1;
 		c.beginPath();
+		var iface = drawboard.iface;
 
 		this.down = function(e) { 
 			if(this.status==0) { //starting select
 				c.strokeStyle = c.createPattern(dashed, 'repeat');
-				activateTempCanvas();
+				this.activateTempCanvas();
 				this.start = { x:m.x, y:m.y }; 
 				this.status = 4;
 			} else if(this.status==3 || this.status==2) { //moving selection
-				if(intersects(m, this.start, this.dimension)) {
+				if(this.intersects(m, this.start, this.dimension)) {
 					this.offset = { x:m.x-this.start.x, y:m.y-this.start.y };
 					if(this.status == 3 && !e.ctrlKey && !e.shiftKey) { //when first moving (and not in stamp mode), clear original pos and paint on tempcanvas
-						undoSave();
+						this.undoSave();
 						var pos = { x:m.x-this.offset.x, y:m.y-this.offset.y };						
-						drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, ctemp);
-						ctemp.drawImage(canvassel, Math.floor(pos.x), Math.floor(pos.y));
+						this.drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, drawboard.contexttemp);
+						drawboard.contexttemp.drawImage(drawboard.canvassel, Math.floor(pos.x), Math.floor(pos.y));
 						c.fillStyle = FILL_STYLE;
 						c.fillRect(this.start.x-.5, this.start.y-.5, this.dimension.x, this.dimension.y);
 					}
 					this.status = 1;
 				} else {  //starting new selection
 					if(this.status < 3) { //actually draw last moved selection to canvas TODO also do this when switching tools
-						c.drawImage(canvassel, Math.floor(this.start.x), Math.floor(this.start.y));
+						c.drawImage(drawboard.canvassel, Math.floor(this.start.x), Math.floor(this.start.y));
 					}
-					activateTempCanvas();
+					this.activateTempCanvas();
 					this.start = { x:m.x, y:m.y };
 					this.status = 4;
 				}
 			}
 		};
 		this.move = function(e) {
+			c = drawboard.context;
+			iface = drawboard.iface;
 			if(this.status==4) { //selecting
-
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
-				ctemp.strokeStyle = c.createPattern(dashed, 'repeat');
-				var constrained = { x:constrain(m.x, 0, canvas.width), y:constrain(m.y, 0, canvas.height-5) };
-				drawRectangle(this.start.x-1, this.start.y-1, constrained.x, constrained.y, null, ctemp);
+				
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
+				drawboard.contexttemp.strokeStyle = c.createPattern(dashed, 'repeat');
+				var constrained = { x:this.constrain(m.x, 0, drawboard.canvas.width), y:this.constrain(m.y, 0, drawboard.canvas.height-5) };
+				this.drawRectangle(this.start.x-1, this.start.y-1, constrained.x, constrained.y, null, drawboard.contexttemp);
 				iface.txy.innerHTML = Math.round(constrained.x-this.start.x)+'x'+Math.round(constrained.y-this.start.y);	
 
 			} else if(this.status==1) { //moving selection
-				ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);
+				
+				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
 				var pos = { x:m.x-this.offset.x, y:m.y-this.offset.y };
-				drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, ctemp);
-				ctemp.drawImage(canvassel, Math.floor(pos.x), Math.floor(pos.y));
+				this.drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, drawboard.contexttemp);
+				drawboard.contexttemp.drawImage(drawboard.canvassel, Math.floor(pos.x), Math.floor(pos.y));
 				if(e.shiftKey) { //dupli mode
-					c.drawImage(canvassel, Math.floor(pos.x), Math.floor(pos.y));
+					c.drawImage(drawboard.canvassel, Math.floor(pos.x), Math.floor(pos.y));
 				}
 			} else if(this.start) {
-				if(c.tool.status == 1 || (c.tool.dimension && intersects(m, c.tool.start, c.tool.dimension))) {
-					canvastemp.style.cursor = 'move';
+				if(c.tool.status == 1 || (c.tool.dimension && this.intersects(m, c.tool.start, c.tool.dimension))) {
+					drawboard.canvastemp.style.cursor = 'move';
 				} else {
-					canvastemp.style.cursor = '';		
+					drawboard.canvastemp.style.cursor = '';		
 				}
 			}
 
 		};
 		this.up = function(e) {
+			c = drawboard.context;
+			iface = drawboard.iface;
 			if(this.status == 4) { //finished selecting
 
 				this.status = 3;
-				this.dimension = { x:constrain(m.x, 0, canvas.width)-this.start.x,
-								   y:constrain(m.y, 0, canvas.height)-this.start.y };
+				this.dimension = { x:this.constrain(m.x, 0, drawboard.canvas.width)-this.start.x,
+								   y:this.constrain(m.y, 0, drawboard.canvas.height)-this.start.y };
 				if(this.dimension.x == 0 && this.dimension.y == 0) { //nothing selected, abort
 					this.status = 0;
-					canvastemp.style.display='none';
-					csel.clearRect(0, 0, canvassel.width, canvassel.height);
+					drawboard.canvastemp.style.display='none';
+					drawboard.csel.clearRect(0, 0, drawboard.canvassel.width, drawboard.canvassel.height);
 				} else { //save on selection canvas
-					csel.clearRect(0, 0, canvassel.width, canvassel.height);
+					drawboard.csel.clearRect(0, 0, drawboard.canvassel.width, drawboard.canvassel.height);
 					if(this.dimension.x < 0) { this.start.x = this.start.x + this.dimension.x; this.dimension.x *= -1; } //correct for selections not drawn from top left
 					if(this.dimension.y < 0) { this.start.y = this.start.y + this.dimension.y; this.dimension.y *= -1; }
 					//todo check for >max
-					csel.drawImage(canvas, Math.floor(this.start.x), Math.floor(this.start.y), this.dimension.x, this.dimension.y, 0, 0, this.dimension.x, this.dimension.y);
-					csel.dimension = this.dimension;
+					drawboard.csel.drawImage(drawboard.canvas, Math.floor(this.start.x), Math.floor(this.start.y), this.dimension.x, this.dimension.y, 0, 0, this.dimension.x, this.dimension.y);
+					drawboard.csel.dimension = this.dimension;
 				}
 				iface.txy.innerHTML = '&nbsp;';
 
@@ -917,53 +1209,72 @@ var tool = {
 				this.status = 2;
 				this.start = { x:m.x-this.offset.x, y:m.y-this.offset.y };
 				if(e.ctrlKey) { //stamp mode
-					c.drawImage(canvassel, Math.floor(this.start.x), Math.floor(this.start.y));
+					c.drawImage(drawboard.canvassel, Math.floor(this.start.x), Math.floor(this.start.y));
 				}
 			}
 		};
 
-		this.del = function() { 
-			undoSave();
-			c.fillStyle = FILL_STYLE;
+		this.del = function() {
+			this.undoSave();
+			c = drawboard.context;
+			c.fillStyle = drawboard.FILL_STYLE;
 			c.fillRect(this.start.x-.5, this.start.y-.5, this.dimension.x, this.dimension.y);
-			activateTempCanvas(); 
-			canvastemp.style.display = 'none';
+			this.activateTempCanvas(); 
+			drawboard.canvastemp.style.display = 'none';
 			this.status = 0;
 		};
-		this.all = function() { 
-			csel.clearRect(0, 0, canvassel.width, canvassel.height);
-			csel.drawImage(canvas, 0, 0);
-			activateTempCanvas();
+		
+		this.all = function() {
+			drawboard.csel.clearRect(0, 0, drawboard.canvassel.width, drawboard.canvassel.height);
+			drawboard.csel.drawImage(drawboard.canvas, 0, 0);
+			this.activateTempCanvas();
 			this.start = { x:0.5, y:0.5 };
-			this.dimension = { x:canvas.width, y:canvas.height };	
-			ctemp.strokeRect(0.5, 0.5, canvas.width-1, canvas.height-1);
+			this.dimension = { x:drawboard.canvas.width, y:drawboard.canvas.height };	
+			drawboard.contexttemp.strokeRect(0.5, 0.5, drawboard.canvas.width-1, drawboard.canvas.height-1);
 			this.status = 3;
 		};
+		
 		this.copy = function() {
-			csel.drawImage(canvas, Math.floor(this.start.x), Math.floor(this.start.y), this.dimension.x, this.dimension.y, 0, 0, this.dimension.x, this.dimension.y);
-			csel.dimension = this.dimension;
+			drawboard.csel.drawImage(drawboard.canvas, Math.floor(this.start.x), Math.floor(this.start.y), this.dimension.x, this.dimension.y, 0, 0, this.dimension.x, this.dimension.y);
+			drawboard.csel.dimension = this.dimension;
 		};
+		
 		this.paste = function() {
-			activateTempCanvas();
-			ctemp.drawImage(canvassel, 0, 0);
+			this.activateTempCanvas();
+			drawboard.contexttemp.drawImage(canvassel, 0, 0);
 			this.status = 3;
 			this.start = { x:.5, y:.5 };
-			this.dimension = csel.dimension;
-			ctemp.strokeRect(this.start.x-.5, this.start.y-.5, this.dimension.x+.5, this.dimension.y+.5);
+			this.dimension = drawboard.csel.dimension;
+			drawboard.contexttemp.strokeRect(this.start.x-.5, this.start.y-.5, this.dimension.x+.5, this.dimension.y+.5);
 
 		};
 
 	},
 
+	getPixel:function(x, y) {
+		c = drawboard.context;
+		if(imgd || c.getImageData) {
+		     return false;
+		} else if (window.opera) {
+		  if(!co) { co = drawboard.canvas.getContext('opera-2dgame');	}
+		  col = co.getPixel(x, y);
+		   return col;
+		}else{
+		   return false; 
+		}
+	},	
+	
 	activateTempCanvas:function() {
 		//resets and shows overlay canvas
+		ctemp = drawboard.contexttemp;
+		c = drawboard.context;
 		if(m) { ctemp.moveTo(m.x, m.y); }							//copy context from main
 		ctemp.lineCap = c.lineCap;								
 		ctemp.lineWidth = c.lineWidth;
 		ctemp.strokeStyle = c.strokeStyle;
 		ctemp.fillStyle = c.fillStyle;
-		ctemp.clearRect(0, 0, canvastemp.width, canvastemp.height);	//clear
-		canvastemp.style.display='block';							//show
+		ctemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);	//clear
+		drawboard.canvastemp.style.display='block';							//show
 	},
 	
 	
@@ -971,41 +1282,41 @@ var tool = {
 		//sets an undo point
 			//cundo.clearRect(0, 0, canvas.width, canvas.height); //this doesn't help with the bg..
 			if(imgd) { imgd = null; }
-			if(canvas.width != canvasundo.width || canvas.height != canvasundo.height) { 
-				canvasundo.width = canvas.width;
-				canvasundo.height = canvas.height;
+			if(drawboard.canvas.width != drawboard.canvasundo.width || drawboard.canvas.height != drawboard.canvasundo.height) { 
+				drawboard.canvasundo.width = drawboard.canvas.width;
+				drawboard.canvasundo.height = drawboard.canvas.height;
 			}
-			cundo.drawImage(canvas, 0, 0);
+			drawboard.cundo.drawImage(drawboard.canvas, 0, 0);
 	},
 	
 	
 	undoLoad:function() {
 		//reverts to last undo point
-		if(canvas.width != canvasundo.width || canvas.height != canvasundo.height) { 
-			clipResize(canvasundo.width, canvasundo.height);
+		if(drawboard.canvas.width != drawboard.canvasundo.width || drawboard.canvas.height != drawboard.canvasundo.height) { 
+			this.clipResize(drawboard.canvasundo.width, drawboard.canvasundo.height);
 		}
 		//ctemp.clearRect(0, 0, canvas.width, canvas.height);
-		ctemp.drawImage(canvas, 0, 0);
+		drawboard.contexttemp.drawImage(drawboard.canvas, 0, 0);
 		//c.clearRect(0, 0, canvas.width, canvas.height);
-		c.drawImage(canvasundo, 0, 0);
+		drawboard.context.drawImage(drawboard.canvasundo, 0, 0);
 		//cundo.clearRect(0, 0, canvas.width, canvas.height);
-		cundo.drawImage(canvastemp, 0, 0);
+		drawboard.cundo.drawImage(drawboard.canvastemp, 0, 0);
 	},
 
 
 	clipResize:function(w, h) {
 		//resizes all the canvases by clipping/extending, moves resize handle
-		undoSave();
-		cundo.fillStyle = c.fillStyle; //save
-		canvas.width = canvastemp.width = canvassel.width = w;
-		canvas.height = canvastemp.height = canvassel.height = h;
-		canvas.style.width = canvastemp.style.width = w+'px';
-		canvas.style.height = canvastemp.style.height = h+'px';
+		this.undoSave();
+		drawboard.cundo.fillStyle = drawboard.context.fillStyle; //save
+		drawboard.canvas.width = drawboard.canvastemp.width = drawboard.canvassel.width = w;
+		drawboard.canvas.height = drawboard.canvastemp.height = drawboard.canvassel.height = h;
+		drawboard.canvas.style.width = drawboard.canvastemp.style.width = w+'px';
+		drawboard.canvas.style.height = drawboard.canvastemp.style.height = h+'px';
 		var cresizer = document.getElementById('canvasresize');
 		cresizer.style.left = w+cresizer.offsetWidth+'px'; cresizer.style.top = h+cresizer.offsetHeight+'px';
-		c.fillStyle = cundo.fillStyle; //restore
-		c.fillRect(0, 0, canvas.width, canvas.height); //so that if expanding it's filled with bg col
-		c.drawImage(canvasundo, 0, 0);
+		drawboard.context.fillStyle = drawboard.cundo.fillStyle; //restore
+		drawboard.context.fillRect(0, 0, drawboard.canvas.width, drawboard.canvas.height); //so that if expanding it's filled with bg col
+		drawboard.context.drawImage(drawboard.canvasundo, 0, 0);
 	},	
 	
 
@@ -1119,7 +1430,7 @@ var tool = {
 
 	drawEllipse:function(x1, y1, x2, y2, mod, trg) {
 		//bounding box. this maybe isn't the best idea?
-		 
+		c = drawboard.context;
 		var dx = Math.abs(x2-x1);
 		var dy = Math.abs(y2-y1);
 		
@@ -1150,7 +1461,7 @@ var tool = {
 
 
 	drawRectangle:function(x1, y1, x2, y2, mod, trg) {
-
+		c = drawboard.context;
 		trg.beginPath();
 		var dx = Math.abs(x2-x1);
 		var dy = Math.abs(y2-y1);
@@ -1173,7 +1484,7 @@ var tool = {
 	},
 
 	drawRounded:function(x1, y1, x2, y2, mod, trg) {
-
+		c = drawboard.context;
 		var dx = Math.abs(x2-x1);
 		var dy = Math.abs(y2-y1);
 
@@ -1231,6 +1542,8 @@ var tool = {
 
 	selCol2:function(col, e, context) {
 		var whichcanvas;
+		c = drawboard.context;
+		ctemp = drawboard.contexttemp;
 		if(e && e.ctrlKey) {	//tertiary
 			whichcanvas = document.getElementById('currcoltert');
 			c.tertStyle = col;
