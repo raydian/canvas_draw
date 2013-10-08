@@ -389,10 +389,10 @@ var tool = {
 				$("#text").css("left", $("canvas").offset().left + m.x - 2).TextAreaExpander(height).css("top", m.y - 10).css("width", width).css("height", height).val("").show().focus();
 				//document.getElementById("canvas").className = "auto";
 			}
-		}
+		};
 		this.up = function(e) {
 			this._up();
-		}
+		};
 	},
 
 	eraser: function() {
@@ -426,11 +426,11 @@ var tool = {
 		this.move = function(e) {
 			this._move();
 			drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
-		}
+		};
 		this.up = function(e) {
 			this._up();
 			drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
-		}
+		};
 
 	},
 
@@ -447,11 +447,11 @@ var tool = {
 		this.move = function(e) {
 			this._move();
 			drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
-		}
+		};
 		this.up = function(e) {
 			this._up();
 			drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
-		}
+		};
 
 	},
 
@@ -468,11 +468,11 @@ var tool = {
 		this.move = function(e) {
 			this._move();
 			drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
-		}
+		};
 		this.up = function(e) {
 			this._up();
 			drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
-		}
+		};
 
 	},
 
@@ -490,16 +490,16 @@ var tool = {
 			this._down();
 			this.lastLineWidth = c.lineWidth;
 			if(c.strokeFill == 3) { c.lineWidth+=1.1; ctemp.lineWidth+=1.1; } //hm
-		}
+		};
 		this.move = function(e) {
 			this._move();
 			drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
-		}
+		};
 		this.up = function(e) {
 			this._up();
 			drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
 			if(c.strokeFill == 3) { c.lineWidth = this.lastLineWidth; ctemp.lineWidth = this.lastLineWidth; }
-		}
+		};
 
 	},
 
@@ -1230,7 +1230,7 @@ function drawLine(x1, y1, x2, y2, mod, trg) {
 	trg.lineTo(x2, y2);
 	trg.stroke();
 	trg.beginPath();
-	return { x:x2, y:y2 }
+	return { x:x2, y:y2 };
 }
 
 function drawArrow(x1, y1, x2, y2, mod, trg) { 
@@ -1266,7 +1266,7 @@ var LineAngle = Math.atan((y2-y1)/(x2-x1));
 var EndAngle1 = LineAngle + 45 * Pi/180;
 var EndAngle2 = LineAngle - 45 * Pi/180;
 
-dir=1
+dir=1;
 if (x2<x1) {
 	dir=-1;
 }
@@ -1285,7 +1285,7 @@ var y4 = y2 - ArrowHeadLength * Math.sin(EndAngle2) * dir;
 
 	trg.stroke();
 	trg.beginPath();
-	return { x:x2, y:y2 }
+	return { x:x2, y:y2 };
 }
 
 function drawEllipse(x1, y1, x2, y2, mod, trg) {
