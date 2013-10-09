@@ -178,7 +178,7 @@ var drawboard = {
 					_draw.canvas.className = "text";
 //					document.getElementById("canvas").className = "text";
 				} else if (clickedTool.attr("src").indexOf("undo") != -1) {
-					undo();
+					paint.undo();
 					return;
 				} else if (clickedTool.attr("src").indexOf("refresh") != -1) {
 					window.location.reload();
@@ -217,7 +217,7 @@ var drawboard = {
 				_draw.setDrawingColor(color);
 //				setDrawingColor(color);
 				$("#colorPicker").css("background-color", color);
-				textArea.css("color", color);
+				drawboard.textArea.css("color", color);
 				$("#colorGrid").hide();
 			});
 
@@ -301,16 +301,16 @@ var paint = {
 				var letter = String.fromCharCode(e.keyCode);
 				switch(letter) {
 					case 'C':
-						this.copy();
+						paint.copy();
 						break;
 					case 'V':
-						this.paste();
+						paint.paste();
 						break;
 					case 'X':
-						this.cut();
+						paint.cut();
 						break;
 					case 'Z':
-						this.undo();
+						paint.undo();
 						break;
 				}
 			}
@@ -407,7 +407,8 @@ var paint = {
 
 		getPixel:function(x, y) {
 			c = this.board.context;
-			if(imgd || c.getImageData) {
+//			if(imgd || c.getImageData) {
+			if(c.getImageData) {
 			     return false;
 			} else if (window.opera) {
 			  if(!co) { co = this.board.canvas.getContext('opera-2dgame');	}
@@ -566,9 +567,9 @@ var tool = {
 	_shapes: function() {
 
 		this.down = this._down = function() {
-			this.undoSave();
+			tool.undoSave();
 //			undoSave();
-			this.activateTempCanvas();
+			tool.activateTempCanvas();
 //			activateTempCanvas();
 			this.start = { x:m.x, y:m.y };
 			this.status = 1;
@@ -598,7 +599,7 @@ var tool = {
 			drawboard.context.beginPath();
 
 //			undoSave();
-			this.undoSave();
+			tool.undoSave();
 			this.sstart = this.last = { x:m.x, y:m.y }; //extra s in sstart to not affect status bar display
 			this.status = 1;
 		};
@@ -736,11 +737,11 @@ var tool = {
 
 		this.move = function(e) {
 			this._move();
-			this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, ctemp);
+			tool.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, c);
+			tool.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -757,11 +758,11 @@ var tool = {
 
 		this.move = function(e) {
 			this._move();
-			this.drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+			tool.drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			this.drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
+			tool.drawArrow(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -778,11 +779,11 @@ var tool = {
 
 		this.move = function(e) {
 			this._move();
-			this.drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+			tool.drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			this.drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
+			tool.drawRectangle(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -804,11 +805,11 @@ var tool = {
 		};
 		this.move = function(e) {
 			this._move();
-			this.drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+			tool.drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			this.drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
+			tool.drawEllipse(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 			if(drawboard.context.strokeFill == 3) { drawboard.context.lineWidth = this.lastLineWidth; drawboard.contexttemp.lineWidth = this.lastLineWidth; }
 		};
 
@@ -823,11 +824,11 @@ var tool = {
 		
 		this.move = function(e) {
 			this._move();
-			this.drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+			tool.drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 		};
 		this.up = function(e) {
 			this._up();
-			this.drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
+			tool.drawRounded(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.context);
 		};
 
 	},
@@ -843,9 +844,9 @@ var tool = {
 
 		this.down = function() {
 			if(this.status==0) { //starting
-				this.undoSave();
+				tool.undoSave();
 //				undoSave();
-				this.activateTempCanvas();
+				tool.activateTempCanvas();
 //				activateTempCanvas();
 				this.start = { x:m.x, y:m.y };
 				this.end = null;
@@ -859,7 +860,7 @@ var tool = {
 		this.move = function(e) { 
 			if(this.status==5) {
 				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
-				this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+				tool.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 				drawboard.contexttemp.stroke();
 				drawboard.iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
 
@@ -912,8 +913,8 @@ var tool = {
 		this.down = function() {
 			if(this.status==0) { //starting poly
 //				undoSave();
-				this.undoSave();
-				this.activateTempCanvas();
+				tool.undoSave();
+				tool.activateTempCanvas();
 //				activateTempCanvas();
 				this.start = { x:m.x, y:m.y };
 				this.last = null;
@@ -927,10 +928,10 @@ var tool = {
 		this.move = function(e) {
 			if(this.status == 3) { //first polyline
 				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
-				this.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+				tool.drawLine(this.start.x, this.start.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 			} else if(this.status == 2) { // next polyline
 				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
-				this.drawLine(this.last.x, this.last.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
+				tool.drawLine(this.last.x, this.last.y, m.x, m.y, e.shiftKey, drawboard.contexttemp);
 			}
 			drawboard.iface.txy.innerHTML = Math.round(m.x-this.start.x)+'x'+Math.round(m.y-this.start.y);
 		};
@@ -980,7 +981,7 @@ var tool = {
 		drawboard.context.lineCap = 'square';
 
 		this.down = function() {
-			this.undoSave();
+			tool.undoSave();
 			this.drawing = setInterval(drawboard.context.tool.draw, 50);
 			this.last = { x:m.x, y:m.y };
 			this.lineCap = 'square';
@@ -1004,7 +1005,7 @@ var tool = {
 			for(var i=c.lineWidth*15; i>0; i--) {
 				var rndx = c.tool.last.x + Math.round(Math.random()*(c.lineWidth*8)-(c.lineWidth*4));
 				var rndy = c.tool.last.y + Math.round(Math.random()*(c.lineWidth*8)-(c.lineWidth*4));
-				this.drawDot(rndx, rndy, 1, c.strokeStyle);
+				tool.drawDot(rndx, rndy, 1, c.strokeStyle);
 			}
 			c.restore();
 		};
@@ -1038,7 +1039,7 @@ var tool = {
 		
 		this.down = function(e) {
 		    
-  			this.undoSave();
+			tool.undoSave();
 		  
         //var imgd = c.getImageData(0, 0, canvas.width, canvas.height);
         var x = Math.round(m.x);
@@ -1062,11 +1063,11 @@ var tool = {
         	var c = drawboard.context;
             var x = popped.x;   
             var y1 = popped.y;
-            while(this.getPixel(x, y1) == oldColor && y1 >= 0) { y1--; }
+            while(tool.getPixel(x, y1) == oldColor && y1 >= 0) { y1--; }
             y1++;
             var spanLeft = false;
             var spanRight = false;
-            while(this.getPixel(x, y1) == oldColor && y1 < drawboard.canvas.height) {
+            while(tool.getPixel(x, y1) == oldColor && y1 < drawboard.canvas.height) {
                 //iface.xy.innerHTML = x+'/'+y1;
                 if(window.opera) {
                 	co = drawboard.canvas.getContext('opera-2dgame');
@@ -1078,18 +1079,18 @@ var tool = {
                   //drawDot(x, y1, 1, c.strokeStyle, c);
                   //document.getElementById('info').innerHTML += '<br />'+x+'/'+y1;
                 }
-                if(!spanLeft && x > 0 && this.getPixel(x-1, y1) == oldColor) {
+                if(!spanLeft && x > 0 && tool.getPixel(x-1, y1) == oldColor) {
                   //break;
                    stack.push({x:x-1, y:y1});        
                     spanLeft = true;
-                } else if(spanLeft && x > 0 && this.getPixel(x-1, y1) != oldColor) {
+                } else if(spanLeft && x > 0 && tool.getPixel(x-1, y1) != oldColor) {
                     spanRight = false;
                 } else if(spanRight && x <= 0) { spanRight = false; }
-                if(!spanRight && x < drawboard.canvas.width-1 && this.getPixel(x+1, y1) == oldColor) {
+                if(!spanRight && x < drawboard.canvas.width-1 && tool.getPixel(x+1, y1) == oldColor) {
                   //break;
                   stack.push({x:x+1, y:y1});
                     spanRight = true;
-                } else if(spanRight && x < drawboard.canvas.width-1 && this.getPixel(x+1, y1) != oldColor) {
+                } else if(spanRight && x < drawboard.canvas.width-1 && tool.getPixel(x+1, y1) != oldColor) {
                     spanRight = false;
                 } else if(spanRight && x >= drawboard.canvas.width) { spanRight = false; }
                 y1++;                   
@@ -1121,26 +1122,26 @@ var tool = {
 		c.lastTool = c.tool.name;
 		c.lineWidth = 1;
 		c.lastStrokeStyle = c.strokeStyle;
-		c.strokeStyle = c.createPattern(dashed, 'repeat');
+		c.strokeStyle = c.createPattern(drawboard.dashed, 'repeat');
 		//c.strokeFill = 1;
 		c.beginPath();
 		var iface = drawboard.iface;
 
 		this.down = function(e) { 
 			if(this.status==0) { //starting select
-				c.strokeStyle = c.createPattern(dashed, 'repeat');
-				this.activateTempCanvas();
+				c.strokeStyle = c.createPattern(drawboard.dashed, 'repeat');
+				tool.activateTempCanvas();
 				this.start = { x:m.x, y:m.y }; 
 				this.status = 4;
 			} else if(this.status==3 || this.status==2) { //moving selection
-				if(this.intersects(m, this.start, this.dimension)) {
+				if(tool.intersects(m, this.start, this.dimension)) {
 					this.offset = { x:m.x-this.start.x, y:m.y-this.start.y };
 					if(this.status == 3 && !e.ctrlKey && !e.shiftKey) { //when first moving (and not in stamp mode), clear original pos and paint on tempcanvas
-						this.undoSave();
+						tool.undoSave();
 						var pos = { x:m.x-this.offset.x, y:m.y-this.offset.y };						
-						this.drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, drawboard.contexttemp);
+						tool.drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, drawboard.contexttemp);
 						drawboard.contexttemp.drawImage(drawboard.canvassel, Math.floor(pos.x), Math.floor(pos.y));
-						c.fillStyle = FILL_STYLE;
+						c.fillStyle = drawboard.FILL_STYLE;
 						c.fillRect(this.start.x-.5, this.start.y-.5, this.dimension.x, this.dimension.y);
 					}
 					this.status = 1;
@@ -1148,7 +1149,7 @@ var tool = {
 					if(this.status < 3) { //actually draw last moved selection to canvas TODO also do this when switching tools
 						c.drawImage(drawboard.canvassel, Math.floor(this.start.x), Math.floor(this.start.y));
 					}
-					this.activateTempCanvas();
+					tool.activateTempCanvas();
 					this.start = { x:m.x, y:m.y };
 					this.status = 4;
 				}
@@ -1160,22 +1161,22 @@ var tool = {
 			if(this.status==4) { //selecting
 				
 				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
-				drawboard.contexttemp.strokeStyle = c.createPattern(dashed, 'repeat');
-				var constrained = { x:this.constrain(m.x, 0, drawboard.canvas.width), y:this.constrain(m.y, 0, drawboard.canvas.height-5) };
-				this.drawRectangle(this.start.x-1, this.start.y-1, constrained.x, constrained.y, null, drawboard.contexttemp);
+				drawboard.contexttemp.strokeStyle = c.createPattern(drawboard.dashed, 'repeat');
+				var constrained = { x:tool.constrain(m.x, 0, drawboard.canvas.width), y:tool.constrain(m.y, 0, drawboard.canvas.height-5) };
+				tool.drawRectangle(this.start.x-1, this.start.y-1, constrained.x, constrained.y, null, drawboard.contexttemp);
 				iface.txy.innerHTML = Math.round(constrained.x-this.start.x)+'x'+Math.round(constrained.y-this.start.y);	
 
 			} else if(this.status==1) { //moving selection
 				
 				drawboard.contexttemp.clearRect(0, 0, drawboard.canvastemp.width, drawboard.canvastemp.height);
 				var pos = { x:m.x-this.offset.x, y:m.y-this.offset.y };
-				this.drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, drawboard.contexttemp);
+				tool.drawRectangle(pos.x-1, pos.y-1, pos.x+this.dimension.x, pos.y+this.dimension.y, null, drawboard.contexttemp);
 				drawboard.contexttemp.drawImage(drawboard.canvassel, Math.floor(pos.x), Math.floor(pos.y));
 				if(e.shiftKey) { //dupli mode
 					c.drawImage(drawboard.canvassel, Math.floor(pos.x), Math.floor(pos.y));
 				}
 			} else if(this.start) {
-				if(c.tool.status == 1 || (c.tool.dimension && this.intersects(m, c.tool.start, c.tool.dimension))) {
+				if(c.tool.status == 1 || (c.tool.dimension && tool.intersects(m, c.tool.start, c.tool.dimension))) {
 					drawboard.canvastemp.style.cursor = 'move';
 				} else {
 					drawboard.canvastemp.style.cursor = '';		
@@ -1189,8 +1190,8 @@ var tool = {
 			if(this.status == 4) { //finished selecting
 
 				this.status = 3;
-				this.dimension = { x:this.constrain(m.x, 0, drawboard.canvas.width)-this.start.x,
-								   y:this.constrain(m.y, 0, drawboard.canvas.height)-this.start.y };
+				this.dimension = { x:tool.constrain(m.x, 0, drawboard.canvas.width)-this.start.x,
+								   y:tool.constrain(m.y, 0, drawboard.canvas.height)-this.start.y };
 				if(this.dimension.x == 0 && this.dimension.y == 0) { //nothing selected, abort
 					this.status = 0;
 					drawboard.canvastemp.style.display='none';
@@ -1215,11 +1216,11 @@ var tool = {
 		};
 
 		this.del = function() {
-			this.undoSave();
+			tool.undoSave();
 			c = drawboard.context;
 			c.fillStyle = drawboard.FILL_STYLE;
 			c.fillRect(this.start.x-.5, this.start.y-.5, this.dimension.x, this.dimension.y);
-			this.activateTempCanvas(); 
+			tool.activateTempCanvas(); 
 			drawboard.canvastemp.style.display = 'none';
 			this.status = 0;
 		};
@@ -1240,7 +1241,7 @@ var tool = {
 		};
 		
 		this.paste = function() {
-			this.activateTempCanvas();
+			tool.activateTempCanvas();
 			drawboard.contexttemp.drawImage(canvassel, 0, 0);
 			this.status = 3;
 			this.start = { x:.5, y:.5 };
@@ -1253,7 +1254,8 @@ var tool = {
 
 	getPixel:function(x, y) {
 		c = drawboard.context;
-		if(imgd || c.getImageData) {
+//		if(imgd || c.getImageData) {
+		if(c.getImageData) {
 		     return false;
 		} else if (window.opera) {
 		  if(!co) { co = drawboard.canvas.getContext('opera-2dgame');	}
@@ -1281,7 +1283,7 @@ var tool = {
 	undoSave:function() {
 		//sets an undo point
 			//cundo.clearRect(0, 0, canvas.width, canvas.height); //this doesn't help with the bg..
-			if(imgd) { imgd = null; }
+			//if(imgd) { imgd = null; }
 			if(drawboard.canvas.width != drawboard.canvasundo.width || drawboard.canvas.height != drawboard.canvasundo.height) { 
 				drawboard.canvasundo.width = drawboard.canvas.width;
 				drawboard.canvasundo.height = drawboard.canvas.height;
@@ -1293,7 +1295,7 @@ var tool = {
 	undoLoad:function() {
 		//reverts to last undo point
 		if(drawboard.canvas.width != drawboard.canvasundo.width || drawboard.canvas.height != drawboard.canvasundo.height) { 
-			this.clipResize(drawboard.canvasundo.width, drawboard.canvasundo.height);
+			tool.clipResize(drawboard.canvasundo.width, drawboard.canvasundo.height);
 		}
 		//ctemp.clearRect(0, 0, canvas.width, canvas.height);
 		drawboard.contexttemp.drawImage(drawboard.canvas, 0, 0);
@@ -1306,7 +1308,7 @@ var tool = {
 
 	clipResize:function(w, h) {
 		//resizes all the canvases by clipping/extending, moves resize handle
-		this.undoSave();
+		tool.undoSave();
 		drawboard.cundo.fillStyle = drawboard.context.fillStyle; //save
 		drawboard.canvas.width = drawboard.canvastemp.width = drawboard.canvassel.width = w;
 		drawboard.canvas.height = drawboard.canvastemp.height = drawboard.canvassel.height = h;
